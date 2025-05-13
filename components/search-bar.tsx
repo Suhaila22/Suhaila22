@@ -1,7 +1,6 @@
-check this please 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -15,6 +14,19 @@ import {
 
 export function SearchBar() {
   const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState("")
+  const [data, setData] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch("/data/search.json")
+      .then(res => res.json())
+      .then(setData)
+      .catch(err => console.error("Failed to load search data", err))
+  }, [])
+
+  const filtered = data.filter(item =>
+    item.toLowerCase().includes(query.toLowerCase())
+  )
 
   return (
     <>
@@ -28,23 +40,24 @@ export function SearchBar() {
         />
       </div>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search for research topics, journals, or keywords..." />
+        <CommandInput
+          placeholder="Type to search..."
+          value={query}
+          onValueChange={setQuery}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Trending Topics">
-            <CommandItem>Tissue Engineering</CommandItem>
-            <CommandItem>Bioprinting</CommandItem>
-            <CommandItem>Neural Interfaces</CommandItem>
-            <CommandItem>Nanomedicine</CommandItem>
-          </CommandGroup>
-          <CommandGroup heading="Top Journals">
-            <CommandItem>Nature Biomedical Engineering</CommandItem>
-            <CommandItem>IEEE Transactions on Biomedical Engineering</CommandItem>
-            <CommandItem>Biomaterials</CommandItem>
-            <CommandItem>Journal of Neural Engineering</CommandItem>
-          </CommandGroup>
+          {filtered.length === 0 ? (
+            <CommandEmpty>No results found.</CommandEmpty>
+          ) : (
+            <CommandGroup heading="Results">
+              {filtered.map((item, index) => (
+                <CommandItem key={index}>{item}</CommandItem>
+              ))}
+            </CommandGroup>
+          )}
         </CommandList>
       </CommandDialog>
     </>
   )
 }
+
