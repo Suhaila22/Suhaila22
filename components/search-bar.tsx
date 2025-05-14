@@ -11,6 +11,28 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command"
+[
+  "Tissue Engineering",
+  "Bioprinting",
+  "Neural Interfaces",
+  "Nanomedicine",
+  "CRISPR Gene Editing",
+  "Wearable Sensors",
+  "Regenerative Medicine",
+  "Smart Prosthetics",
+  "Artificial Organs",
+  "3D Bioprinting",
+  "Stem Cell Therapy",
+  "Precision Medicine",
+  "Biomedical Imaging",
+  "Medical Robotics",
+  "Bioinformatics",
+  "Lab-on-a-Chip",
+  "Biosensors",
+  "Synthetic Biology",
+  "Organ-on-a-Chip",
+  "Gene Therapy"
+]
 
 export function SearchBar() {
   const [open, setOpen] = useState(false)
