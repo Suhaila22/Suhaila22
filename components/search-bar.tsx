@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import {
   CommandDialog,
   CommandEmpty,
@@ -10,45 +10,42 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "@/components/ui/command"
-[
-  "Tissue Engineering",
-  "Bioprinting",
-  "Neural Interfaces",
-  "Nanomedicine",
-  "CRISPR Gene Editing",
-  "Wearable Sensors",
-  "Regenerative Medicine",
-  "Smart Prosthetics",
-  "Artificial Organs",
-  "3D Bioprinting",
-  "Stem Cell Therapy",
-  "Precision Medicine",
-  "Biomedical Imaging",
-  "Medical Robotics",
-  "Bioinformatics",
-  "Lab-on-a-Chip",
-  "Biosensors",
-  "Synthetic Biology",
-  "Organ-on-a-Chip",
-  "Gene Therapy"
-]
+} from "@/components/ui/command";
+import { DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useRouter } from "next/navigation";
 
 export function SearchBar() {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState("")
-  const [data, setData] = useState<string[]>([])
+  const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [conferences, setConferences] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const router = useRouter();
 
+  // Fetch conferences on mount
   useEffect(() => {
-    fetch("/data/search.json")
-      .then(res => res.json())
-      .then(setData)
-      .catch(err => console.error("Failed to load search data", err))
-  }, [])
+    async function fetchConferences() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch("/api/conferences");
+        if (!response.ok) throw new Error("Failed to fetch conferences");
+        const data = await response.json();
+        setConferences(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchConferences();
+  }, []);
 
-  const filtered = data.filter(item =>
-    item.toLowerCase().includes(query.toLowerCase())
-  )
+  // Filter conferences based on search query
+  const filteredConferences = conferences.filter((conf) =>
+    conf.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <>
@@ -56,29 +53,47 @@ export function SearchBar() {
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search for research topics, journals, or keywords..."
+          placeholder="Search for conferences..."
           className="w-full bg-background pl-8 md:w-2/3 lg:w-1/2"
           onClick={() => setOpen(true)}
         />
       </div>
       <CommandDialog open={open} onOpenChange={setOpen}>
+        <VisuallyHidden>
+          <DialogTitle>Search Conferences</DialogTitle>
+        </VisuallyHidden>
+        <DialogDescription className="sr-only">
+          Search for conferences by name, date, or keywords.
+        </DialogDescription>
         <CommandInput
-          placeholder="Type to search..."
-          value={query}
-          onValueChange={setQuery}
+          placeholder="Search for conferences..."
+          value={searchQuery}
+          onValueChange={setSearchQuery}
         />
         <CommandList>
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <CommandEmpty>Loading...</CommandEmpty>
+          ) : error ? (
+            <CommandEmpty>Failed to load conferences: {error}</CommandEmpty>
+          ) : filteredConferences.length === 0 ? (
             <CommandEmpty>No results found.</CommandEmpty>
           ) : (
-            <CommandGroup heading="Results">
-              {filtered.map((item, index) => (
-                <CommandItem key={index}>{item}</CommandItem>
+            <CommandGroup heading="Conferences">
+              {filteredConferences.map((conf) => (
+                <CommandItem
+                  key={conf.id}
+                  onSelect={() => {
+                    router.push(`/conferences/${conf.id}`);
+                    setOpen(false);
+                  }}
+                >
+                  {conf.name} - {conf.date}
+                </CommandItem>
               ))}
             </CommandGroup>
           )}
         </CommandList>
       </CommandDialog>
     </>
-  )
+  );
 }
